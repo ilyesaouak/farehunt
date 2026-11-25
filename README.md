@@ -2,6 +2,16 @@
 
 Finds the cheapest **door-to-door** route from Heidelberg to Tunisia. It scans flights from 12 airports in Germany, France, Switzerland and Italy to Tunis, Enfidha, Monastir and Djerba, adds the train or bus to each airport, and ranks every route by total cost, travel time and risk.
 
+## Preview
+
+![Results ranked by best value, with the route map and the best deal so far](docs/screenshots/results.png)
+
+| Live scan in progress | Sorted by cheapest, low risk only |
+| --- | --- |
+| ![Fares streaming in while the scan runs](docs/screenshots/scanning.png) | ![Results sorted by price and filtered to low-risk routes](docs/screenshots/filters.png) |
+
+<sub>Screenshots use demo prices.</sub>
+
 ## Getting started
 
 ```bash
