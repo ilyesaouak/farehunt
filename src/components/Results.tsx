@@ -122,6 +122,17 @@ export function Results({ state, onHover }: { state: SearchState; onHover: (id: 
         </motion.div>
       )}
 
+      {state.source === "demo" && (scored.length > 0 || loading) && (
+        <div className="flex items-start gap-3 rounded-2xl border border-warn/30 bg-warn/10 px-4 py-3 text-sm text-ink-200">
+          <AlertIcon className="mt-0.5 shrink-0 text-warn" />
+          <p>
+            <span className="font-bold text-warn">These are simulated demo prices</span> — they won&apos;t match Google Flights or any airline. For real
+            fares, set <code className="font-mono text-xs">SERPAPI_KEY</code> in <code className="font-mono text-xs">.env.local</code>, restart the
+            server, and turn off &ldquo;Demo data&rdquo;.
+          </p>
+        </div>
+      )}
+
       <motion.div layout className="space-y-4">
         <AnimatePresence mode="popLayout">
           {visible.map((r, i) => (
@@ -131,6 +142,7 @@ export function Results({ state, onHover }: { state: SearchState; onHover: (id: 
               rank={i + 1}
               isTop={r.id === topId}
               savingVsNearest={nearest && nearest.id !== r.id ? nearest.costs.total - r.costs.total : null}
+              simulated={state.source === "demo"}
               onHover={onHover}
             />
           ))}

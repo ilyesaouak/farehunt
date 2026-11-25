@@ -7,7 +7,8 @@ import { assessRisk, computeCosts, doorToDoorMinutes, leaveHomeBy } from "./pric
 import type { FlightProvider, LookupQuery } from "./providers/types";
 import type { DateQuote, RouteResult, SearchEvent, SearchRequest } from "./types";
 
-const cache = new PromiseCache<DateQuote>(30 * 60 * 1000);
+// Fares move quickly, so keep cached lookups short-lived.
+const cache = new PromiseCache<DateQuote>(10 * 60 * 1000);
 
 function lookupsFor(req: SearchRequest, origin: string, destination: string): LookupQuery[] {
   // With flexible dates on a return trip, shift the return by the same offset so
@@ -25,15 +26,19 @@ export function buildRouteResult(req: SearchRequest, origin: string, destination
   const sorted = [...quotes].sort((a, b) => a.date.localeCompare(b.date));
 
   let best: RouteResult["best"] = null;
+  let bestQuote: DateQuote | null = null;
   for (const q of sorted) {
     const offer = q.offers[0];
     if (offer && (!best || offer.price < best.offer.price)) {
       best = { date: q.date, returnDate: q.returnDate, offer, insight: q.insight };
+      bestQuote = q;
     }
   }
 
   const linkDate = best?.date ?? req.departDate;
   const links = buildLinks(o, destination, req.tripType, linkDate, best?.returnDate ?? req.returnDate);
+  // Prefer the exact Google Flights search SerpAPI ran, so the page shows the same fares.
+  if (bestQuote?.googleFlightsUrl) links.googleFlights = bestQuote.googleFlightsUrl;
   if (best) {
     const leave = leaveHomeBy(best.offer, o);
     if (leave) links.bahn = bahnUrl(o.ground.station, best.date, leave);

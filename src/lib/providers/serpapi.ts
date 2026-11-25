@@ -26,6 +26,7 @@ interface SerpItinerary {
 }
 interface SerpResponse {
   error?: string;
+  search_metadata?: { google_flights_url?: string };
   best_flights?: SerpItinerary[];
   other_flights?: SerpItinerary[];
   price_insights?: {
@@ -96,7 +97,8 @@ export function createSerpApiProvider(apiKey: string): FlightProvider {
         gl: "de",
         adults: "1",
         sort_by: "2", // price
-        show_hidden: "true",
+        // No show_hidden: hidden fares don't appear on Google Flights by default,
+        // so including them made our prices lower than what users could book.
       });
       if (q.returnDate) params.set("return_date", q.returnDate);
 
@@ -133,7 +135,12 @@ export function createSerpApiProvider(apiKey: string): FlightProvider {
         return true;
       });
 
-      return { ...base, offers: unique.slice(0, 8), insight: toInsight(data.price_insights) };
+      return {
+        ...base,
+        offers: unique.slice(0, 8),
+        insight: toInsight(data.price_insights),
+        googleFlightsUrl: data.search_metadata?.google_flights_url,
+      };
     },
   };
 }

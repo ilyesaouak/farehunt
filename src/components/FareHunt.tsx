@@ -10,7 +10,7 @@ import type { DataSource } from "@/lib/types";
 import { Results } from "./Results";
 import { RouteMap } from "./RouteMap";
 import { SearchPanel, type SearchForm } from "./SearchPanel";
-import { AnimatedNumber } from "./ui/AnimatedNumber";
+import { AnimatedNumber, formatEuro } from "./ui/AnimatedNumber";
 import { ClockIcon, PlaneIcon, ShieldIcon, SparkIcon, TrainIcon } from "./ui/icons";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -177,7 +177,10 @@ export function FareHunt({
                           {getOrigin(best.origin)?.city} → {getDestination(best.destination)?.city} · {formatDate(best.best.date)}
                         </p>
                       </div>
-                      <AnimatedNumber value={best.costs.total} className="text-3xl font-black text-sand-200" />
+                      <div className="text-right">
+                        <AnimatedNumber value={best.costs.total} className="text-3xl font-black text-sand-200" />
+                        <p className="text-[11px] text-ink-400">incl. train · flight {formatEuro(best.costs.flight, true)}</p>
+                      </div>
                     </div>
                     <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[11px] text-ink-400">
                       <Stat icon={<PlaneIcon width={13} height={13} />} label={best.best.offer.stops === 0 ? "Nonstop" : `${best.best.offer.stops} stop`} />

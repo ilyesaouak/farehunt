@@ -71,6 +71,8 @@ export interface DateQuote {
   returnDate?: string;
   offers: FlightOffer[];
   insight?: PriceInsight;
+  /** Exact Google Flights page for this lookup (live data only). */
+  googleFlightsUrl?: string;
   error?: string;
 }
 

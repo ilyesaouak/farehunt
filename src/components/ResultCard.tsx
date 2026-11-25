@@ -29,12 +29,15 @@ export function ResultCard({
   rank,
   isTop,
   savingVsNearest,
+  simulated,
   onHover,
 }: {
   route: ScoredRoute;
   rank: number;
   isTop: boolean;
   savingVsNearest: number | null;
+  /** Demo data: prices are invented and won't match any booking site. */
+  simulated: boolean;
   onHover: (id: string | null) => void;
 }) {
   const [open, setOpen] = useState(isTop);
@@ -74,7 +77,11 @@ export function ResultCard({
               {isTop && <Tag className="border-sand-300/40 bg-sand-300/15 text-sand-200">★ Best value</Tag>}
               {route.isCheapest && <Tag className="border-lagoon-400/30 bg-lagoon-400/10 text-lagoon-300">Cheapest</Tag>}
               {route.isFastest && <Tag className="border-white/15 bg-white/5 text-ink-200">Fastest</Tag>}
-              <Tag className={VERDICT_STYLE[verdict.tone]}>{verdict.label}</Tag>
+              {simulated ? (
+                <Tag className="border-warn/30 bg-warn/10 text-warn">Simulated price</Tag>
+              ) : (
+                <Tag className={VERDICT_STYLE[verdict.tone]}>{verdict.label}</Tag>
+              )}
             </div>
 
             <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -93,7 +100,10 @@ export function ResultCard({
               <div className="sm:text-right">
                 <AnimatedNumber value={route.costs.total} className="text-3xl font-black tracking-tight text-sand-200" />
                 <p className="text-xs text-ink-400">
-                  total {route.tripType === "return" ? "round trip" : "one way"}
+                  total incl. train, {route.tripType === "return" ? "round trip" : "one way"}
+                </p>
+                <p className="mt-1 text-xs text-ink-300">
+                  Flight only <span className="tabular font-bold text-ink-100">{formatEuro(route.costs.flight, true)}</span>
                 </p>
                 {savingVsNearest !== null && savingVsNearest > 1 && (
                   <p className="mt-0.5 text-xs font-semibold text-lagoon-300">saves {formatEuro(savingVsNearest)} vs nearest airport</p>
@@ -144,7 +154,7 @@ export function ResultCard({
                 whileTap={{ scale: 0.97 }}
                 className="inline-flex items-center gap-1.5 rounded-full bg-ink-100 px-4 py-2 text-xs font-bold text-ink-950 transition hover:bg-white"
               >
-                Book flight <ExternalIcon width={13} height={13} />
+                Book flight · {formatEuro(route.costs.flight, true)} <ExternalIcon width={13} height={13} />
               </motion.a>
               <a
                 href={route.links.bahn}
@@ -249,14 +259,14 @@ function Itinerary({ route }: { route: ScoredRoute }) {
       </ol>
       {others.length > 0 && (
         <>
-          <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-ink-400">Other flights that day</p>
+          <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-ink-400">Other flights that day · flight price</p>
           <ul className="space-y-1.5 text-sm">
             {others.map((f) => (
               <li key={f.id} className="flex items-center justify-between gap-3 text-ink-300">
                 <span className="truncate">
                   {timeOf(f.departTime)}–{timeOf(f.arriveTime)} · {f.airline} · {f.stops === 0 ? "nonstop" : `${f.stops} stop`}
                 </span>
-                <span className="tabular font-semibold text-ink-100">{formatEuro(f.price + route.costs.ground)}</span>
+                <span className="tabular font-semibold text-ink-100">{formatEuro(f.price, true)}</span>
               </li>
             ))}
           </ul>
