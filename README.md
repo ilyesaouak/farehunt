@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FareHunt
 
-## Getting Started
+Finds the cheapest **door-to-door** route from Heidelberg to Tunisia. It scans flights from 12 airports in Germany, France, Switzerland and Italy to Tunis, Enfidha, Monastir and Djerba, adds the train or bus to each airport, and ranks every route by total cost, travel time and risk.
 
-First, run the development server:
+## Getting started
 
 ```bash
+npm install
+cp .env.example .env.local   # optional: add SERPAPI_KEY for live prices
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Without `SERPAPI_KEY` the app runs in **demo mode**: it shows deterministic, simulated fares, clearly labelled in the UI. With a key you can still switch to demo data from the search panel to save API quota.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How it works
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Layer | File | Notes |
+| --- | --- | --- |
+| Search API | `src/app/api/search/route.ts` | `GET /api/search?origins=FRA,STR&destinations=TUN&tripType=oneway&depart=YYYY-MM-DD&flex=3` streams NDJSON events (`start`, `progress`, `route`, `done`) |
+| Orchestration | `src/lib/search.ts` | Bounded concurrency, 30-min in-memory cache, per-request lookup budget (`src/lib/limits.ts`) |
+| Providers | `src/lib/providers/` | `serpapi.ts` (Google Flights) and `demo.ts` (seeded fake fares) |
+| Calculations | `src/lib/pricing.ts`, `src/lib/scoring.ts` | See below |
+| Data | `src/lib/airports.ts` | Airports, coordinates, ground-transport estimates from Heidelberg Hbf |
 
-## Learn More
+### Calculations
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Total cost** = flight + ground fare × legs. A return trip counts 2 ground legs (there and back).
+- **Door to door** = ground minutes + a 2h airport buffer + flight duration (outbound).
+- **Risk** is derived from the itinerary: length of the ground leg, number of changes, cross-border rail, flight stops, and whether you'd have to leave home before 05:00.
+- **Value score** (0–100) is relative to the best route in the same search: 60% price, 25% door-to-door time, 15% reliability.
+- **Flexible dates** scan consecutive departure days. For return trips, the return date shifts by the same amount so the trip length stays the same.
+- All date math is done on UTC calendar dates, so dates never shift with the timezone.
